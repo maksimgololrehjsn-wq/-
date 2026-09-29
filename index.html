@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Number Hunter — игра</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #07090d;
+      --panel: #10141b;
+      --panel2: #151b24;
+      --border: #252d39;
+      --text: #f4f7fb;
+      --muted: #8993a3;
+      --blue: #4d8dff;
+      --green: #36d98b;
+      --gold: #ffc94a;
+      --red: #ff5c69;
+      --purple: #a974ff;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, #17233a 0%, transparent 40%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    button {
+      font: inherit;
+      border: 0;
+      cursor: pointer;
+    }
+
+    /* Верхнее предупреждение */
+    .game-warning {
+      width: 100%;
+      padding: 10px 18px;
+      text-align: center;
+      background: #19150a;
+      border-bottom: 1px solid #55451b;
+      color: #ffd75c;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    header {
+      max-width: 1150px;
+      margin: auto;
+      padding: 28px 20px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .logo span {
+      color: var(--blue);
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .stat {
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      background: rgba(16,20,27,.8);
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stat b {
+      color: white;
+      margin-left: 5px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 55px 20px 70px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 6vw, 64px);
+      line-height: 1;
+      letter-spacing: -3px;
+      margin-bottom: 15px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* Номер */
+    .machine {
+      position: relative;
+      padding: 45px 25px;
+      background: linear-gradient(145deg, #111720, #0c1016);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: 0 25px 80px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+
+    .machine::before {
+      content: "";
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: rgba(77,141,255,.08);
+      border-radius: 50%;
+      filter: blur(70px);
+      top: -250px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .rarity {
+      position: relative;
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .rarity.special {
+      color: var(--gold);
+    }
+
+    .plate-wrap {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      perspective: 1000px;
+    }
+
+    .plate {
+      width: min(650px, 100%);
+      min-height: 155px;
+      padding: 25px 35px;
+      background: linear-gradient(145deg, #f9fafc, #d9dee5);
+      border-radius: 17px;
+      border: 4px solid #858c96;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.5),
+        inset 0 0 0 2px white;
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      user-select: none;
+      transition: transform .25s;
+    }
+
+    .plate.shake {
+      animation: shake .08s infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(-3px) rotateY(-1deg); }
+      50% { transform: translateX(3px) rotateY(1deg); }
+      100% { transform: translateX(-3px) rotateY(-1deg); }
+    }
+
+    .plate-number {
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: clamp(42px, 9vw, 82px);
+      letter-spacing: -2px;
+      white-space: nowrap;
+    }
+
+    .region {
+      align-self: flex-end;
+      margin-bottom: 8px;
+      margin-left: 10px;
+      padding-left: 10px;
+      border-left: 2px solid #222;
+      font-size: clamp(22px, 4vw, 38px);
+      font-weight: 900;
+    }
+
+    .flag {
+      font-size: 18px;
+      display: block;
+      text-align: center;
+      margin-top: 1px;
+    }
+
+    .description {
+      position: relative;
+      text-align: center;
+      min-height: 28px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .description strong {
+      color: white;
+    }
+
+    /* Кнопки */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .spin-btn {
+      min-width: 230px;
+      padding: 17px 28px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #4d8dff, #6b61ff);
+      color: white;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: 0 12px 35px rgba(77,141,255,.25);
+      transition: .2s;
+    }
+
+    .spin-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .spin-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .save-btn {
+      padding: 17px 24px;
+      border-radius: 14px;
+      background: #171d27;
+      border: 1px solid var(--border);
+      color: white;
+      font-weight: 800;
+    }
+
+    .save-btn:hover {
+      background: #202834;
+    }
+
+    .save-btn.saved {
+      color: var(--green);
+      border-color: #236e4b;
+    }
+
+    /* Коллекция */
+    .collection-section {
+      margin-top: 55px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 17px;
+    }
+
+    .section-title h2 {
+      font-size: 22px;
+    }
+
+    .clear-btn {
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .clear-btn:hover {
+      color: var(--red);
+    }
+
+    .collection {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      padding: 35px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      color: var(--muted);
+    }
+
+    .collection-card {
+      position: relative;
+      padding: 17px;
+      border-radius: 17px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      transition: .2s;
+    }
+
+    .collection-card:hover {
+      transform: translateY(-2px);
+      border-color: #394555;
+    }
+
+    .mini-plate {
+      background: #e9edf2;
+      color: #111;
+      border: 2px solid #888f99;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-weight: 900;
+      text-align: center;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .card-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    .badge.normal { color: var(--muted); }
+    .badge.rare { color: var(--blue); }
+    .badge.epic { color: var(--purple); }
+    .badge.legendary { color: var(--gold); }
+
+    .delete-btn {
+      color: #687384;
+      background: transparent;
+      font-size: 18px;
+    }
+
+    .delete-btn:hover {
+      color: var(--red);
+    }
+
+    /* Всплывашка */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 25px;
+      transform: translate(-50%, 100px);
+      opacity: 0;
+      padding: 13px 18px;
+      background: #171d27;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.4);
+      transition: .3s;
+      z-index: 20;
+      font-size: 14px;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .stats {
+        justify-content: flex-start;
+      }
+
+      main {
+        padding-top: 35px;
+      }
+
+      .machine {
+        padding: 30px 12px;
+      }
+
+      .plate {
+        min-height: 105px;
+        padding: 17px 10px;
+        border-width: 3px;
+      }
+
+      .plate-number {
+        font-size: 35px;
+      }
+
+      .region {
+        font-size: 19px;
+        padding-left: 7px;
+        margin-left: 4px;
+      }
+
+      .flag {
+        font-size: 11px;
+      }
+
+      .spin-btn {
+        width: 100%;
+      }
+
+      .save-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-warning">
+    🎮 ЭТО ИГРА — ВСЕ НОМЕРА ВЫМЫШЛЕННЫЕ И НЕ ЯВЛЯЮТСЯ НАСТОЯЩИМИ ГОСУДАРСТВЕННЫМИ НОМЕРАМИ
+  </div>
+
+  <header>
+    <div class="logo">NUMBER<span>HUNTER</span></div>
+
+    <div class="stats">
+      <div class="stat">Крутов <b id="spins">0</b></div>
+      <div class="stat">Поймано <b id="caught">0</b></div>
+      <div class="stat">Коллекция <b id="collectionCount">0</b></div>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <h1>Охота за номером</h1>
+      <p>Крути рулетку и попробуй поймать редкую комбинацию.</p>
+    </section>
+
+    <section class="machine">
+
+      <div class="rarity" id="rarity">
+        ГОТОВ К ОХОТЕ
+      </div>
+
+      <div class="plate-wrap">
+        <div class="plate" id="plate">
+
+          <div class="plate-number" id="plateNumber">
+            А000АА
+          </div>
+
+          <div class="region">
+            <span id="regionNumber">00</span>
+            <span class="flag">🇷🇺</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="description" id="description">
+        Нажми «Крутить» и узнай, что выпадет.
+      </div>
+
+      <div class="controls">
+        <button class="spin-btn" id="spinBtn">
+          🎰 КРУТИТЬ НОМЕР
+        </button>
+
+        <button class="save-btn" id="saveBtn" disabled>
+          ♡ Сохранить
+        </button>
+      </div>
+
+    </section>
+
+    <section class="collection-section">
+
+      <div class="section-title">
+        <h2>🏆 Моя коллекция</h2>
+        <button class="clear-btn" id="clearBtn">
+          Очистить коллекцию
+        </button>
+      </div>
+
+      <div class="collection" id="collection"></div>
+
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /*
+      NUMBER HUNTER
+      Все номера здесь являются игровыми комбинациями.
+      Они не предназначены для использования как реальные госномера.
+    */
+
+    const letters = [
+      "А","В","Е","К","М","Н","О","Р","С","Т","У","Х"
+    ];
+
+    // Популярные игровые регионы
+    const regions = [
+      "01","02","05","07","10","16","23","26","50",
+      "52","54","55","59","61","63","66","74","77",
+      "78","86","89","99"
+    ];
+
+    const spinBtn = document.getElementById("spinBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    const plate = document.getElementById("plate");
+    const plateNumber = document.getElementById("plateNumber");
+    const regionNumber = document.getElementById("regionNumber");
+
+    const rarityEl = document.getElementById("rarity");
+    const descriptionEl = document.getElementById("description");
+
+    const spinsEl = document.getElementById("spins");
+    const caughtEl = document.getElementById("caught");
+    const collectionCountEl = document.getElementById("collectionCount");
+
+    const collectionEl = document.getElementById("collection");
+    const toast = document.getElementById("toast");
+
+    let currentNumber = null;
+    let isSpinning = false;
+
+    let stats = JSON.parse(
+      localStorage.getItem("numberHunterStats")
+    ) || {
+      spins: 0,
+      caught: 0
+    };
+
+    let collection = JSON.parse(
+      localStorage.getItem("numberHunterCollection")
+    ) || [];
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function randomDigit() {
+      return Math.floor(Math.random() * 10);
+    }
+
+    function randomNumber() {
+      const a = randomItem(letters);
+      const b = randomItem(letters);
+      const c = randomItem(letters);
+
+      const d1 = randomDigit();
+      const d2 = randomDigit();
+      const d3 = randomDigit();
+
+      const region = randomItem(regions);
+
+      return {
+        text: `${a}${d1}${d2}${d3}${b}${c}`,
+        region
+      };
+    }
+
+    /*
+      Специальные игровые комбинации.
+      Это не оценка реальных номеров — просто игровые паттерны.
+    */
+    function createSpecialNumber() {
+      const a = randomItem(letters);
+      const b = randomItem(letters);
+      const c = randomItem(letters);
+      const region = randomItem(regions);
+
+      const type = Math.random();
+
+      // 777 / 888 / 999
+      if (type < 0.25) {
+        const n = randomItem(["000", "111", "222", "333", "555", "666", "777", "888", "999"]);
+
+        return {
+          text: `${a}${n}${b}${c}`,
+          region
+        };
+      }
+
+      // 001 / 007 / 100 / 500
+      if (type < 0.45) {
+        const n = randomItem(["001", "007", "010", "100", "111", "500"]);
+
+        return {
+          text: `${a}${n}${b}${c}`,
+          region
+        };
+      }
+
+      // 123 / 321
+      if (type < 0.62) {
+        const n = randomItem(["123", "321", "234", "432"]);
+
+        return {
+          text: `${a}${n}${b}${c}`,
+          region
+        };
+      }
+
+      // 3 одинаковые буквы
+      if (type < 0.78) {
+        const l = randomItem(letters);
+
+        return {
+          text: `${l}${randomDigit()}${randomDigit()}${randomDigit()}${l}${l}`,
+          region
+        };
+      }
+
+      // Зеркальная комбинация
+      return {
+        text: `${a}121${a}${a}`,
+        region
+      };
+    }
+
+    function generateNumber() {
+      // Специальный номер выпадает примерно в 18% случаев
+      if (Math.random() < 0.18) {
+        return createSpecialNumber();
+      }
+
+      return randomNumber();
+    }
+
+    function analyzeNumber(item) {
+      const text = item.text;
+
+      const digits = text.slice(1, 4);
+      const lettersPart = text.slice(0, 1) + text.slice(4);
+
+      const uniqueDigits = new Set(digits).size;
+
+      // Три одинаковые цифры
+      if (/^(\d)\1\1$/.test(digits)) {
+        return {
+          level: "legendary",
+          title: "БЛАТНОЙ",
+          stars: "★★★★★",
+          description: `Три одинаковые цифры: ${digits}`
+        };
+      }
+
+      // Красивые последовательности
+      if (
+        ["123","321","234","432","007","001","010","100","500"].includes(digits)
+      ) {
+        return {
+          level: "epic",
+          title: "ОЧЕНЬ РЕДКИЙ",
+          stars: "★★★★☆",
+          description: `Особая игровая комбинация ${digits}`
+        };
+      }
+
+      // Одинаковые буквы
+      if (lettersPart[0] === lettersPart[1] &&
+          lettersPart[1] === lettersPart[2]) {
+        return {
+          level: "epic",
+          title: "РЕДКИЙ",
+          stars: "★★★★☆",
+          description: `Три одинаковые буквы`
+        };
+      }
+
+      // Две пары одинаковых цифр
+      if (uniqueDigits === 2) {
+        return {
+          level: "rare",
+          title: "КРАСИВЫЙ",
+          stars: "★★★☆☆",
+          description: "Повторяющиеся цифры"
+        };
+      }
+
+      return {
+        level: "normal",
+        title: "ОБЫЧНЫЙ",
+        stars: "★★☆☆☆",
+        description: "Ничего необычного — можно крутить ещё."
+      };
+    }
+
+    function displayNumber(item, analysis) {
+      plateNumber.textContent = item.text;
+      regionNumber.textContent = item.region;
+
+      rarityEl.textContent =
+        `${analysis.title}  ${analysis.stars}`;
+
+      rarityEl.className =
+        `rarity ${analysis.level === "legendary" ? "special" : ""}`;
+
+      descriptionEl.innerHTML =
+        `<strong>${analysis.description}</strong>`;
+    }
+
+    function saveStats() {
+      localStorage.setItem(
+        "numberHunterStats",
+        JSON.stringify(stats)
+      );
+
+      localStorage.setItem(
+        "numberHunterCollection",
+        JSON.stringify(collection)
+      );
+    }
+
+    function updateStats() {
+      spinsEl.textContent = stats.spins;
+      caughtEl.textContent = stats.caught;
+      collectionCountEl.textContent = collection.length;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2200);
+    }
+
+    async function spin() {
+      if (isSpinning) return;
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+      saveBtn.disabled = true;
+
+      stats.spins++;
+      saveStats();
+      updateStats();
+
+      plate.classList.add("shake");
+
+      // Быстрые промежуточные номера
+      for (let i = 0; i < 18; i++) {
+        const temp = generateNumber();
+
+        plateNumber.textContent = temp.text;
+        regionNumber.textContent = temp.region;
+
+        await new Promise(resolve =>
+          setTimeout(resolve, 45 + i * 5)
+        );
+      }
+
+      const result = generateNumber();
+      const analysis = analyzeNumber(result);
+
+      currentNumber = {
+        ...result,
+        ...analysis
+      };
+
+      plate.classList.remove("shake");
+
+      displayNumber(result, analysis);
+
+      stats.caught++;
+
+      saveBtn.disabled = false;
+      isSpinning = false;
+      spinBtn.disabled = false;
+
+      saveStats();
+      updateStats();
+
+      if (analysis.level === "legendary") {
+        showToast("🔥 БЛАТНОЙ! Забери его в коллекцию!");
+      } else if (analysis.level === "epic") {
+        showToast("💎 Редкая комбинация!");
+      }
+    }
+
+    function isSaved(item) {
+      return collection.some(
+        x => x.text === item.text && x.region === item.region
+      );
+    }
+
+    function saveCurrent() {
+      if (!currentNumber) return;
+
+      if (isSaved(currentNumber)) {
+        showToast("Этот номер уже в коллекции.");
+        return;
+      }
+
+      collection.unshift({
+        text: currentNumber.text,
+        region: currentNumber.region,
+        level: currentNumber.level,
+        title: currentNumber.title,
+        stars: currentNumber.stars,
+        description: currentNumber.description
+      });
+
+      saveStats();
+      updateStats();
+      renderCollection();
+
+      saveBtn.classList.add("saved");
+      saveBtn.textContent = "✓ В коллекции";
+
+      showToast("❤️ Номер добавлен в коллекцию!");
+    }
+
+    function removeFromCollection(index) {
+      collection.splice(index, 1);
+
+      saveStats();
+      updateStats();
+      renderCollection();
+
+      saveBtn.classList.remove("saved");
+      saveBtn.textContent = "♡ Сохранить";
+
+      showToast("Номер удалён.");
+    }
+
+    function renderCollection() {
+      if (collection.length === 0) {
+        collectionEl.innerHTML = `
+          <div class="empty">
+            Пока здесь пусто.<br>
+            Крути рулетку и собирай красивые игровые номера.
+          </div>
+        `;
+        return;
+      }
+
+      collectionEl.innerHTML = collection.map((item, index) => `
+        <div class="collection-card">
+
+          <div class="mini-plate">
+            ${item.text}
+            <span style="font-size:12px;">${item.region}</span>
+          </div>
+
+          <div class="card-info">
+            <div>
+              <div class="badge ${item.level}">
+                ${item.title}
+              </div>
+
+              <div style="color:#8993a3;font-size:11px;margin-top:4px;">
+                ${item.stars}
+              </div>
+            </div>
+
+            <button
+              class="delete-btn"
+              onclick="removeFromCollection(${index})"
+              title="Удалить"
+            >
+              ×
+            </button>
+          </div>
+
+        </div>
+      `).join("");
+    }
+
+    clearBtn.addEventListener("click", () => {
+      if (collection.length === 0) return;
+
+      const ok = confirm(
+        "Удалить всю коллекцию?"
+      );
+
+      if (!ok) return;
+
+      collection = [];
+
+      saveStats();
+      updateStats();
+      renderCollection();
+
+      showToast("Коллекция очищена.");
+    });
+
+    spinBtn.addEventListener("click", spin);
+    saveBtn.addEventListener("click", saveCurrent);
+
+    // Запуск
+    updateStats();
+    renderCollection();
+  </script>
+
+</body>
+</html>
